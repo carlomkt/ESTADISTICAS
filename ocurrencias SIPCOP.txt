@@ -1,0 +1,140 @@
+// Este objeto define la estructura del formulario para "Ocurrencias SIPCOP".
+// Utiliza un formato de acordeón para organizar las diferentes categorías.
+const ocurrenciasSipcopForm = {
+    title: 'Ocurrencias SIPCOP',
+    container: 'ocurrencias-sipcop',
+    uploadId: 'ocurrencias-sipcop-upload',
+    format: 'horizontal',
+    structure: [
+        {
+            title: '01 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP , EN ACTIVIDADES PRESUNTAMENTE DELICTIVAS',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0101 PRESUNTAS ACTIVIDADES CONTRA LA VIDA EL CUERPO Y LA SALUD',
+                    '0102 PRESUNTA ACTIVIDAD CONTRA LA LIBERTAD',
+                    '0103 PRESUNTAS ACTIVIDADES CONTRA EL PATRIMONIO',
+                    '0104 PRESUNTAS ACTIVIDADES CONTRA LA SEG. PUB.',
+                    '0105 PRE. ACTIV.CONTRA LA SALUD PUB.',
+                    '0106 PRE. ACTIV. AMBIENTALES',
+                    '0107 PRESUNTA ACTIVIDAD CONTRA LA TRANQUILIDAD PUB',
+                    '0108 PRESUNTAS ACTIV. CONTRA LA ADM. PUB.',
+                    '0109 PRE. ACTIV. CONTRA LOS PODERES DEL ESTADO'
+                ]
+            }]
+        },
+        {
+            title: '02 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP EN PRESUNTAS FALTAS',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0201 PRESUNTA ACTIV. CONTRA CONTRA LA PERSONA',
+                    '0202 PRESUNTA ACTIV. CONTRA EL PATRIMONIO',
+                    '0203 PRE. ACTIV. CONTRA LA SEG. PÚBLICA',
+                    '0204 PRESUNTA ACTIV. CONTRA LAS BUENAS COSTUMBRES',
+                    '0205 PRESUNTA ACTIV. CONTRA LA TRANQUIL. PUB.'
+                ]
+            }]
+        },
+        {
+            title: '03 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP Y OTRAS GERENCIAS, EN PRESUNTAS INFRACCIONES',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0301 PRESUNTOS ACCIDENTES E INFRACCIONES AL TRÁNSITO Y TRANSPORTE',
+                    '0302 PRESUNTA ACTIV. CONTRA LA LEY DE PROTEC. Y BIENESTAR ANIMAL',
+                    '0303 PRESUNTA ACTIV. DE PERSONAS QUE AFECTAN TRANQUILIDAD Y EL ORDEN',
+                    '0304 PRESUNTAS INFRACCIONES A LAS ORDENANZAS Y LICENCIAS MUNICIPALES'
+                ]
+            }]
+        },
+        {
+            title: '04 AYUDA Y APOYO A PERSONAS Y ENTIDADES',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0401 AYUDA, AUXILIO Y RESCATE DE PERSONAS',
+                    '0402 APOYO A OTRAS GERENCIAS O AREAS DE LA MUNICIPALIDAD',
+                    '0403 APOYO A OTRAS ENTIDADES'
+                ]
+            }]
+        },
+        {
+            title: '05 EMISION DE ALERTAS TEMPRANAS EN DESASTRES, INFRAESTRUCTURA, SERVICIOS Y ESPACIOS PÚBLICOS AFECTADOS Y EN RIESGO',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0501 DESASTRES',
+                    '0502 INFRAESTRUCTURA Y SERVICIOS ESENCIALES AFECTADOS',
+                    '0503 ESPACIOS PÚBLICOS EN RIESGO'
+                ]
+            }]
+        },
+        {
+            title: '06 ACONTECIMIENTOS ESPECIALES',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0601 PRESUNTOS ACONTECIMIENTOS ESPECIALES'
+                ]
+            }]
+        },
+        {
+            title: '07 OPERATIVOS',
+            items: [{
+                subtitle: '',
+                fields: [
+                    '0701 OPERATIVO MUNICIPAL',
+                    '0702 ESTRATEGIAS Y OPERATIVOS ESPECIALES'
+                ]
+            }]
+        }
+    ],
+    // La función 'renderAccordionForm' es la encargada de dibujar este formulario en la pantalla.
+    render: 'renderAccordionForm'
+};
+
+
+// Estos son los datos de ejemplo precargados para la sección "Ocurrencias SIPCOP" para el año 2025.
+const initialDataSipcop = { 
+    "2025-01": { 
+        "ocurrencias-sipcop_0101-presuntas-actividades-contra-la-vida-el-cuerpo-y-la-salud": 2, 
+        "ocurrencias-sipcop_0102-presunta-actividad-contra-la-libertad": 2, 
+        "ocurrencias-sipcop_0103-presuntas-actividades-contra-el-patrimonio": 10, 
+        "ocurrencias-sipcop_0104-presuntas-actividades-contra-la-seg-pub": 1, 
+        "ocurrencias-sipcop_0201-presunta-activ-contra-contra-la-persona": 1, 
+        "ocurrencias-sipcop_0202-presunta-activ-contra-el-patrimonio": 10, 
+        "ocurrencias-sipcop_0204-presunta-activ-contra-las-buenas-costumbres": 34, 
+        "ocurrencias-sipcop_0301-presuntos-accidentes-e-infracciones-al-transito-y-transporte": 128, 
+        "ocurrencias-sipcop_0302-presunta-activ-contra-la-ley-de-protec-y-bienestar-animal": 238, 
+        "ocurrencias-sipcop_0303-presunta-activ-de-personas-que-afectan-tranquilidad-y-el-orden": 174, 
+        "ocurrencias-sipcop_0304-presuntas-infracciones-a-las-ordenanzas-y-licencias-municipales": 4, 
+        "ocurrencias-sipcop_0401-ayuda-auxilio-y-rescate-de-personas": 3, 
+        "ocurrencias-sipcop_0402-apoyo-a-otras-gerencias-o-areas-de-la-municipalidad": 28, 
+        "ocurrencias-sipcop_0403-apoyo-a-otras-entidades": 7, 
+        "ocurrencias-sipcop_0501-desastres": 4, 
+        "ocurrencias-sipcop_0601-presuntos-acontecimientos-especiales": 4, 
+        "ocurrencias-sipcop_0701-operativo-municipal": 148, 
+        "ocurrencias-sipcop_0702-estrategias-y-operativos-especiales": 101 
+    }, 
+    "2025-02": { 
+        "ocurrencias-sipcop_0101-presuntas-actividades-contra-la-vida-el-cuerpo-y-la-salud": 7, 
+        "ocurrencias-sipcop_0102-presunta-actividad-contra-la-libertad": 2, 
+        "ocurrencias-sipcop_0103-presuntas-actividades-contra-el-patrimonio": 23, 
+        "ocurrencias-sipcop_0104-presuntas-actividades-contra-la-seg-pub": 3, 
+        "ocurrencias-sipcop_0108-presuntas-activ-contra-la-adm-pub": 3, 
+        "ocurrencias-sipcop_0202-presunta-activ-contra-el-patrimonio": 23, 
+        "ocurrencias-sipcop_0204-presunta-activ-contra-las-buenas-costumbres": 49, 
+        "ocurrencias-sipcop_0301-presuntos-accidentes-e-infracciones-al-transito-y-transporte": 107, 
+        "ocurrencias-sipcop_0302-presunta-activ-contra-la-ley-de-protec-y-bienestar-animal": 238, 
+        "ocurrencias-sipcop_0303-presunta-activ-de-personas-que-afectan-tranquilidad-y-el-orden": 326, 
+        "ocurrencias-sipcop_0304-presuntas-infracciones-a-las-ordenanzas-y-licencias-municipales": 2, 
+        "ocurrencias-sipcop_0401-ayuda-auxilio-y-rescate-de-personas": 1, 
+        "ocurrencias-sipcop_0402-apoyo-a-otras-gerencias-o-areas-de-la-municipalidad": 26, 
+        "ocurrencias-sipcop_0403-apoyo-a-otras-entidades": 13, 
+        "ocurrencias-sipcop_0501-desastres": 12, 
+        "ocurrencias-sipcop_0601-presuntos-acontecimientos-especiales": 7, 
+        "ocurrencias-sipcop_0701-operativo-municipal": 94, 
+        "ocurrencias-sipcop_0702-estrategias-y-operativos-especiales": 154 
+    },
+    // ... y así sucesivamente para los demás meses (Marzo a Agosto).

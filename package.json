@@ -1,0 +1,21 @@
+{
+  "name": "estacodisec",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^7.1.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "firebase": "^12.2.1",
+    "papaparse": "^5.5.3"
+  }
+}
