@@ -1,6 +1,6 @@
 import { db, auth } from './firebase.js';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, onSnapshot, setDoc, getDoc, writeBatch } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
 
 // --- STATE MANAGEMENT ---
 let state = {
@@ -129,17 +129,95 @@ const forms = {
         render: renderAccordionForm
     },
     ocurrenciasSipcop: {
-        title: 'Ocurrencias SIPCOP (Prueba)',
+        title: 'Ocurrencias SIPCOP',
         container: 'ocurrencias-sipcop',
         uploadId: 'ocurrencias-sipcop-upload',
         format: 'horizontal',
-        structure: [{
-            title: 'Sección de Prueba',
-            items: [{
-                subtitle: 'Subtítulo de Prueba',
-                fields: ['Campo de Prueba 1', 'Campo de Prueba 2']
-            }]
-        }],
+        structure: [
+            {
+                title: '01 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP , EN ACTIVIDADES PRESUNTAMENTE DELICTIVAS',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0101 PRESUNTAS ACTIVIDADES CONTRA LA VIDA EL CUERPO Y LA SALUD',
+                        '0102 PRESUNTA ACTIVIDAD CONTRA LA LIBERTAD',
+                        '0103 PRESUNTAS ACTIVIDADES CONTRA EL PATRIMONIO',
+                        '0104 PRESUNTAS ACTIVIDADES CONTRA LA SEG. PUB.',
+                        '0105 PRE. ACTIV.CONTRA LA SALUD PUB.',
+                        '0106 PRE. ACTIV. AMBIENTALES',
+                        '0107 PRESUNTA ACTIVIDAD CONTRA LA TRANQUILIDAD PUB',
+                        '0108 PRESUNTAS ACTIV. CONTRA LA ADM. PUB.',
+                        '0109 PRE. ACTIV. CONTRA LOS PODERES DEL ESTADO'
+                    ]
+                }]
+            },
+            {
+                title: '02 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP EN PRESUNTAS FALTAS',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0201 PRESUNTA ACTIV. CONTRA CONTRA LA PERSONA',
+                        '0202 PRESUNTA ACTIV. CONTRA EL PATRIMONIO',
+                        '0203 PRE. ACTIV. CONTRA LA SEG. PÚBLICA',
+                        '0204 PRESUNTA ACTIV. CONTRA LAS BUENAS COSTUMBRES',
+                        '0205 PRESUNTA ACTIV. CONTRA LA TRANQUIL. PUB.'
+                    ]
+                }]
+            },
+            {
+                title: '03 EMISION DE ALERTAS TEMPRANAS EN APOYO A LA PNP Y OTRAS GERENCIAS, EN PRESUNTAS INFRACCIONES',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0301 PRESUNTOS ACCIDENTES E INFRACCIONES AL TRÁNSITO Y TRANSPORTE',
+                        '0302 PRESUNTA ACTIV. CONTRA LA LEY DE PROTEC. Y BIENESTAR ANIMAL',
+                        '0303 PRESUNTA ACTIV. DE PERSONAS QUE AFECTAN TRANQUILIDAD Y EL ORDEN',
+                        '0304 PRESUNTAS INFRACCIONES A LAS ORDENANZAS Y LICENCIAS MUNICIPALES'
+                    ]
+                }]
+            },
+            {
+                title: '04 AYUDA Y APOYO A PERSONAS Y ENTIDADES',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0401 AYUDA, AUXILIO Y RESCATE DE PERSONAS',
+                        '0402 APOYO A OTRAS GERENCIAS O AREAS DE LA MUNICIPALIDAD',
+                        '0403 APOYO A OTRAS ENTIDADES'
+                    ]
+                }]
+            },
+            {
+                title: '05 EMISION DE ALERTAS TEMPRANAS EN DESASTRES, INFRAESTRUCTURA, SERVICIOS Y ESPACIOS PÚBLICOS AFECTADOS Y EN RIESGO',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0501 DESASTRES',
+                        '0502 INFRAESTRUCTURA Y SERVICIOS ESENCIALES AFECTADOS',
+                        '0503 ESPACIOS PÚBLICOS EN RIESGO'
+                    ]
+                }]
+            },
+            {
+                title: '06 ACONTECIMIENTOS ESPECIALES',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0601 PRESUNTOS ACONTECIMIENTOS ESPECIALES'
+                    ]
+                }]
+            },
+            {
+                title: '07 OPERATIVOS',
+                items: [{
+                    subtitle: '',
+                    fields: [
+                        '0701 OPERATIVO MUNICIPAL',
+                        '0702 ESTRATEGIAS Y OPERATIVOS ESPECIALES'
+                    ]
+                }]
+            }
+        ],
         render: renderAccordionForm
     },
     delitosComisaria: {
@@ -209,6 +287,12 @@ const saveButton = document.getElementById('save-button');
 const saveButtonText = document.getElementById('save-button-text');
 const contentDiv = document.getElementById('content');
 const loadingDiv = document.getElementById('loading');
+const loginContainer = document.getElementById('login-container');
+const appContainer = document.getElementById('app-container');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+const logoutButton = document.getElementById('logout-button');
+const googleSignInButton = document.getElementById('google-signin-button');
 
 // --- RENDERING FUNCTIONS ---
 function toSlug(str) {
@@ -677,39 +761,45 @@ function populateSubCategoryFilter() {
 }
 
 async function handleExport() {
-    // This function still uses local data. It needs to be refactored to use the fetched annual data.
-    // For now, we leave it as is, as it depends on loadAnnualData completing successfully.
     const exportStatus = document.getElementById('export-status');
     const exportBtn = document.getElementById('export-btn');
     exportBtn.disabled = true;
     exportStatus.innerHTML = `<div class="flex items-center justify-center text-sky-600"><div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-sky-500 mr-3"></div>Generando reporte...</div>`;
 
+    await loadAnnualData(); // Ensure data is loaded
+
     const year = state.currentYear;
     const sectionKey = document.getElementById('export-section-select').value;
     const categoryKey = document.getElementById('export-category-select').value;
     const formDef = forms[sectionKey];
-
-    // We use state.annualData which is populated by loadAnnualData
     const annualDataForExport = state.annualData;
 
     let csvData = [];
     let headers = [];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+    const processFields = (fieldsToProcess) => {
+        fieldsToProcess.forEach(field => {
+            const row = [field.name];
+            let total = 0;
+            for (let month = 1; month <= 12; month++) {
+                const value = (annualDataForExport[month]?.[field.key]) || 0;
+                row.push(value);
+                total += value;
+            }
+            row.push(total);
+            csvData.push(row);
+        });
+    };
+
     if (formDef.format === 'vertical') {
         headers = ['Mes'];
         let fieldsToExport = [];
         if (categoryKey === 'all') {
-            fieldsToExport = formDef.structure.map(field => ({
-                name: field,
-                key: `${toSlug(formDef.title)}_${toSlug(field)}`
-            }));
+            fieldsToExport = formDef.structure.map(field => ({ name: field, key: `${toSlug(formDef.title)}_${toSlug(field)}` }));
         } else {
             const fieldName = formDef.structure.find(f => `${toSlug(formDef.title)}_${toSlug(f)}` === categoryKey);
-            if (fieldName) fieldsToExport.push({
-                name: fieldName,
-                key: categoryKey
-            });
+            if (fieldName) fieldsToExport.push({ name: fieldName, key: categoryKey });
         }
         headers.push(...fieldsToExport.map(f => f.name));
         csvData.push(headers);
@@ -718,7 +808,7 @@ async function handleExport() {
             const month = i + 1;
             const row = [months[i]];
             fieldsToExport.forEach(field => {
-                const value = annualDataForExport[month]?. [field.key] || 0;
+                const value = (annualDataForExport[month]?.[field.key]) || 0;
                 row.push(value);
             });
             csvData.push(row);
@@ -726,39 +816,188 @@ async function handleExport() {
     } else { // Horizontal
         headers = ['Tipo de Ocurrencia', ...months, 'Total Anual'];
         csvData.push(headers);
-        let fieldsToExport = [];
+
         if (categoryKey === 'all') {
             formDef.structure.forEach(section => {
-                csvData.push([section.title]); // Main title as a row
+                csvData.push([`"${section.title}"`]); // Main title as a row
                 section.items.forEach(item => {
-                    if (item.subtitle) csvData.push([item.subtitle]); // Subtitle as a row
-                    item.fields.forEach(field => fieldsToExport.push({
-                        name: field,
-                        key: `${toSlug(formDef.title)}_${toSlug(field)}`
-                    }));
+                    if (item.subtitle) csvData.push([`"${item.subtitle}"`]); // Subtitle as a row
+                    const fieldsToExport = item.fields.map(field => {
+                        const fieldSlug = toSlug(field);
+                        const sectionSlug = toSlug(section.title);
+                        return {
+                            name: field,
+                            key: `${toSlug(formDef.title)}_${sectionSlug}_${fieldSlug}`
+                        };
+                    });
+                    processFields(fieldsToExport);
                 });
             });
         } else {
-            const fieldName = findFieldNameByKey(formDef, categoryKey);
-            if (fieldName) fieldsToExport.push({
-                name: fieldName,
-                key: categoryKey
-            });
-        }
-
-        fieldsToExport.forEach(field => {
-            const row = [field.name];
-            let total = 0;
-            for (let month = 1; month <= 12; month++) {
-                const value = annualDataForExport[month]?. [field.key] || 0;
-                row.push(value);
-                total += value;
+            const { fieldName, sectionTitle } = findFieldNameAndSectionByKey(formDef, categoryKey);
+            if (fieldName) {
+                const fieldsToExport = [{ name: fieldName, key: categoryKey }];
+                processFields(fieldsToExport);
             }
-            row.push(total);
-            csvData.push(row);
-        });
+        }
     }
 
     let csvContent = "";
     csvData.forEach(rowArray => {
-        let row = rowArray.map(item => `"${String(item || '').replace(/
+        let row = rowArray.map(item => {
+            let cell = String(item || '').replace(/"/g, '""');
+            if (cell.includes(',')) cell = `"${cell}"`;
+            return cell;
+        }).join(',');
+        csvContent += row + '\r\n';
+    });
+
+    exportBtn.disabled = false;
+    exportStatus.innerHTML = '';
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    const fileName = `${formDef.title.replace(/ /g, "_")}_${year}.csv`;
+    link.setAttribute("download", fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function findFieldNameAndSectionByKey(formDef, keyToFind) {
+    let found = { fieldName: null, sectionTitle: null };
+    if (formDef.format !== 'horizontal') return found;
+
+    formDef.structure.forEach(section => {
+        section.items.forEach(item => {
+            item.fields.forEach(field => {
+                const fieldSlug = toSlug(field);
+                const sectionSlug = toSlug(section.title);
+                const key = `${toSlug(formDef.title)}_${sectionSlug}_${fieldSlug}`;
+                if (key === keyToFind) {
+                    found = { fieldName: field, sectionTitle: section.title };
+                }
+            });
+        });
+    });
+    return found;
+}
+
+
+// --- INITIALIZATION ---
+function initApp() {
+    // Populate year select
+    for (let i = 2030; i >= 2020; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+    }
+    yearSelect.value = state.currentYear;
+    monthSelect.value = state.currentMonth;
+
+    // Event Listeners
+    sidebarNav.addEventListener('click', (e) => {
+        const link = e.target.closest('.sidebar-link');
+        if (link && link.dataset.view) {
+            state.currentView = link.dataset.view;
+            if (state.currentView === 'reports' || state.currentView === 'export') {
+                if (state.currentView === 'export') {
+                     populateExportFilters();
+                }
+                loadAnnualData().then(() => {
+                    if (state.currentView === 'reports') {
+                        renderReportView();
+                    }
+                });
+            } else if (state.currentView === 'bulk-upload') {
+                renderUploadForm();
+                updateView();
+            } else {
+                loadMonthlyData();
+            }
+            updateView();
+        }
+    });
+
+    yearSelect.addEventListener('change', (e) => {
+        state.currentYear = Number(e.target.value);
+        if (state.currentView === 'reports' || state.currentView === 'export') {
+            loadAnnualData().then(() => {
+                if (state.currentView === 'reports') {
+                    renderReportView();
+                }
+                if (state.currentView === 'export') {
+                    // Maybe re-export or update something
+                }
+            });
+        } else {
+            loadMonthlyData();
+        }
+    });
+
+    monthSelect.addEventListener('change', (e) => {
+        state.currentMonth = Number(e.target.value);
+        loadMonthlyData();
+    });
+
+    saveButton.addEventListener('click', saveData);
+    contentDiv.addEventListener('input', handleInputChange);
+
+    document.getElementById('chart-category-select')?.addEventListener('change', updateChart);
+    document.getElementById('upload-btn')?.addEventListener('click', handleBulkUpload);
+    document.getElementById('export-btn')?.addEventListener('click', handleExport);
+    document.getElementById('export-section-select')?.addEventListener('change', populateSubCategoryFilter);
+
+    // Initial Load
+    loadMonthlyData();
+}
+
+// --- AUTHENTICATION ---
+onAuthStateChanged(auth, user => {
+    if (user) {
+        // User is signed in.
+        loginContainer.style.display = 'none';
+        appContainer.style.display = 'flex';
+        initApp();
+    } else {
+        // User is signed out.
+        loginContainer.style.display = 'flex';
+        appContainer.style.display = 'none';
+    }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = loginForm.email.value;
+    const password = loginForm.password.value;
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginError.textContent = '';
+    } catch (error) {
+        loginError.textContent = 'Error: Usuario o contraseña incorrectos.';
+        console.error("Login error:", error);
+    }
+});
+
+logoutButton.addEventListener('click', async () => {
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.error("Logout error:", error);
+    }
+});
+
+googleSignInButton.addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+        loginError.textContent = '';
+    } catch (error) {
+        loginError.textContent = 'Error al iniciar sesión con Google.';
+        console.error("Google sign-in error:", error);
+    }
+});
