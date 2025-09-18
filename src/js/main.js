@@ -1,6 +1,6 @@
 import { db, auth } from './firebase.js';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, onSnapshot, setDoc, getDoc, writeBatch } from "firebase/firestore";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, onSnapshot, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- STATE MANAGEMENT ---
 let state = {
