@@ -488,7 +488,7 @@ const forms = {
     title: 'Observatorio del Delito',
     container: 'form-observatorio-delito',
     uploadId: 'observatorio-delito-upload',
-    format: 'horizontal',
+    format: 'vertical',
     structure: [
       'Administración pública (delito)',
       'Adolescente infractor de la ley penal',
@@ -496,7 +496,7 @@ const forms = {
       'Derechos intelectuales (delito)',
       'Faltas',
       'Familia (delito)',
-      'Fe publica (delito)',
+      'Fe pública (delito)',
       'Honor (delito)',
       'Humanidad (delito)',
       'Ley 30096 delitos informáticos, modificada por la ley 30171',
@@ -1080,6 +1080,8 @@ async function handleBulkUpload() {
         Papa.parse(file, {
           header: true,
           skipEmptyLines: true,
+          transformHeader: header => header.trim(),
+          encoding: "UTF-8",
           complete: resolve,
           error: reject,
         });
