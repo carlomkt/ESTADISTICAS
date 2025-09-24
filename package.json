@@ -21,10 +21,13 @@
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "genkit": "^1.19.3",
     "prettier": "^3.6.2",
     "vite": "^7.1.5"
   },
   "dependencies": {
+    "@genkit-ai/googleai": "^1.19.3",
+    "@google/generative-ai": "^0.24.1",
     "chart.js": "^4.5.0",
     "firebase": "^12.2.1",
     "lucide": "^0.544.0",

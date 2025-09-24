@@ -1,5 +1,11 @@
+// --- FUNCIONES PARA ANÁLISIS IA --- 
+
+
+
+
 import './style.css';
 import { db, auth } from './firebase.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   GoogleAuthProvider,
   signInWithPopup,
@@ -7,6 +13,7 @@ import {
   onAuthStateChanged,
   signOut,
 } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   doc,
   onSnapshot,
@@ -38,7 +45,7 @@ let state = {
 const forms = {
   estadisticasGenerales: {
     title: 'Estadísticas Generales',
-    container: 'estadisticas-generales',
+    container: 'accordion-container',
     uploadId: 'estadisticas-generales-upload',
     format: 'horizontal',
     structure: [
@@ -361,7 +368,7 @@ const forms = {
   },
   ocurrenciasSipcop: {
     title: 'Ocurrencias SIPCOP',
-    container: 'ocurrencias-sipcop',
+    container: 'accordion-container-sipcop',
     uploadId: 'ocurrencias-sipcop-upload',
     format: 'horizontal',
     structure: [
@@ -859,8 +866,7 @@ function updateVehiculosTotal() {
   const mantenimiento =
     Number(document.getElementById('vehiculos_nro-en-mantenimiento')?.value) ||
     0;
-  const inoperativas =
-    Number(document.getElementById('vehiculos_nro-inoperativas')?.value) || 0;
+  const inoperativas = Number(document.getElementById('vehiculos_nro-inoperativas')?.value) || 0;
   const totalInput = document.getElementById('vehiculos-total');
   if (totalInput) {
     totalInput.value = operativas + mantenimiento + inoperativas;
@@ -1101,8 +1107,7 @@ async function handleBulkUpload() {
                 dataForMonth[key] = Number(row[field]) || 0;
               }
             });
-          } else {
-            // horizontal
+          } else { // horizontal
             formDef.structure.forEach((section) => {
               section.items.forEach((item) => {
                 item.fields.forEach((field) => {
@@ -1180,8 +1185,7 @@ function populateSubCategoryFilter() {
       });
       categorySelect.appendChild(optgroup);
     });
-  } else {
-    // Vertical
+  } else { // Vertical
     formDef.structure.forEach((field) => {
       const option = document.createElement('option');
       option.value = `${toSlug(formDef.title)}_${toSlug(field)}`;
@@ -1262,8 +1266,7 @@ async function handleExport() {
       });
       csvData.push(row);
     }
-  } else {
-    // Horizontal
+  } else { // Horizontal
     headers = ['Tipo de Ocurrencia', ...months, 'Total Anual'];
     csvData.push(headers);
 
@@ -1338,6 +1341,79 @@ function findFieldNameAndSectionByKey(formDef, keyToFind) {
   return found;
 }
 
+// --- AI SUMMARY ---
+function formatDataForAI(data, formDef) {
+  let text = "Tipo de Ocurrencia\tValor\n";
+  if (formDef.format === 'horizontal') {
+    formDef.structure.forEach(section => {
+      text += `
+${section.title}
+`;
+      section.items.forEach(item => {
+        if (item.subtitle) {
+          text += `${item.subtitle}\n`;
+        }
+        item.fields.forEach(field => {
+          const key = `${toSlug(formDef.title)}_${toSlug(section.title)}_${toSlug(field)}`;
+          const value = data[key] || 0;
+          text += `${field}\t${value}\n`;
+        });
+      });
+    });
+  } else { // vertical
+    formDef.structure.forEach(field => {
+      const key = `${toSlug(formDef.title)}_${toSlug(field)}`;
+      const value = data[key] || 0;
+      text += `${field}\t${value}\n`;
+    });
+  }
+  return text;
+}
+
+async function generateAiSummaryFor(formKey) {
+  const formDef = forms[formKey];
+  const formKeySlug = toSlug(formKey);
+  const summaryContainer = document.getElementById(`summary-container-${formKeySlug}`);
+  const generateBtn = document.getElementById(`generate-summary-${formKeySlug}-btn`);
+
+  if (!summaryContainer || !generateBtn) {
+    console.error(`UI elements for AI summary for ${formKey} not found.`);
+    return;
+  }
+
+  if (!state.data || Object.keys(state.data).length === 0) {
+    summaryContainer.innerHTML = `<p class="text-yellow-600">No hay datos cargados para el mes actual. Por favor, seleccione un mes con datos.</p>`;
+    return;
+  }
+
+  generateBtn.disabled = true;
+  summaryContainer.innerHTML = `<div class="flex items-center text-sky-600"><div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-sky-500 mr-3"></div>Contactando a la IA para el análisis de los datos de la Base de Datos...</div>`;
+
+  try {
+    const formattedData = formatDataForAI(state.data, formDef);
+    const API_KEY = import.meta.env.VITE_API_KEY;
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Analiza los siguientes datos de un informe de incidencias del mes actual para la sección "${formDef.title}". Los datos provienen de la base de datos en tiempo real. El informe está en español. Quiero que identifiques las 3 categorías con los valores más altos. Para cada una, indica su valor. Finalmente, proporciona un breve resumen en español de tus hallazgos y alguna recomendación basada en los datos.
+
+DATOS:
+${formattedData}`;
+
+    const result = await model.generateContent(prompt);
+    const summaryText = await result.response.text();
+
+    summaryContainer.innerHTML = summaryText.replace(/\n/g, '<br>');
+  } catch (error) {
+    console.error(`Error calling AI function for ${formKey}:`, error);
+    summaryContainer.innerHTML = `<p class="text-red-500"><strong>Error al generar el resumen.</strong><br>Mensaje: ${error.message}</p>`;
+  } finally {
+    generateBtn.disabled = false;
+    createIcons({ icons });
+  }
+}
+
+
 // --- INITIALIZATION ---
 function initApp() {
   // Populate year select
@@ -1411,6 +1487,20 @@ function initApp() {
     .getElementById('export-section-select')
     ?.addEventListener('change', populateSubCategoryFilter);
 
+  // AI Summary Buttons
+  document
+    .getElementById('generate-summary-estadisticasgenerales-btn')
+    ?.addEventListener('click', () => generateAiSummaryFor('estadisticasGenerales'));
+  document
+    .getElementById('generate-summary-ocurrenciassipcop-btn')
+    ?.addEventListener('click', () => generateAiSummaryFor('ocurrenciasSipcop'));
+  document
+    .getElementById('generate-summary-delitoscomisaria-btn')
+    ?.addEventListener('click', () => generateAiSummaryFor('delitosComisaria'));
+  document
+    .getElementById('generate-summary-observatoriodelito-btn')
+    ?.addEventListener('click', () => generateAiSummaryFor('observatorioDelito'));
+
   // Initial Load
   loadMonthlyData();
 }
@@ -1424,7 +1514,7 @@ onAuthStateChanged(auth, (user) => {
     initApp();
   } else {
     // User is signed out.
-    loginContainer.style.display = 'flex';
+    loginContainer.style.display = 'none';
     appContainer.style.display = 'none';
   }
 });
