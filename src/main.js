@@ -1391,7 +1391,7 @@ async function generateAiSummaryFor(formKey) {
 
   try {
     const formattedData = formatDataForAI(state.data, formDef);
-    const API_KEY = import.meta.env.VITE_API_KEY;
+    const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -1412,6 +1412,9 @@ ${formattedData}`;
     createIcons({ icons });
   }
 }
+
+
+
 
 
 // --- INITIALIZATION ---
@@ -1504,6 +1507,7 @@ function initApp() {
   // Initial Load
   loadMonthlyData();
 }
+
 
 // --- AUTHENTICATION ---
 onAuthStateChanged(auth, (user) => {
